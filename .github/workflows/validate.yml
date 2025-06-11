@@ -222,10 +222,10 @@ jobs:
         fi
         
     - name: Validate with ${{ matrix.validator }}
-      run: |
+      run: |  # <--- The pipe character indicates a multi-line script
         if [ "${{ matrix.validator }}" = "ajv-cli" ]; then
-          if ls examples/*.yaml 1> /dev/null 2>&1; then
-            find examples -name "*.yaml" | while read file; do
+          if ls examples/*.yaml 1> /dev/null 2>&1; then # Check if any yaml files exist
+            find examples -name "*.yaml" -o -name "*.yml" | while read file; do # Also find .yml
               echo "Validating $file with ajv-cli"
               ajv validate -s schema/rtm-schema.json -d "$file"
             done
@@ -233,39 +233,85 @@ jobs:
             echo "No example files found for ajv-cli validation"
           fi
         elif [ "${{ matrix.validator }}" = "jsonschema" ]; then
-          cat > validate.py << 'EOF'
-import json
-import yaml
-import jsonschema
-import glob
-import sys
-import os
+          # Ensure the 'cat' command itself is properly indented
+          # And the content being fed to 'cat' (the Python script) is also properly indented
+          # relative to the 'run: |' line.
+          # The Python script content itself does not need further YAML indentation,
+          # as it's treated as a literal block by 'cat << EOF'.
+          cat > validate_with_jsonschema.py << 'EOF'
+        import json
+        import yaml
+        import jsonschema
+        import glob
+        import sys
+        import os
 
-if not os.path.exists('schema/rtm-schema.json'):
-    print('Schema file not found: schema/rtm-schema.json')
-    sys.exit(1)
+        SCHEMA_FILE = 'schema/rtm-schema.json'
+        EXAMPLES_GLOB = 'examples/**/*.yaml' # Consider adding '*.yml' if needed, e.g. 'examples/**/*.{yaml,yml}'
+        ALL_VALID = True # Flag to track overall validation status
 
-with open('schema/rtm-schema.json') as f:
-    schema = json.load(f)
+        print(f"--- Starting Python jsonschema validation ---")
+        print(f"Schema file: {SCHEMA_FILE}")
+        print(f"Examples glob: {EXAMPLES_GLOB}")
 
-yaml_files = glob.glob('examples/**/*.yaml', recursive=True)
-if not yaml_files:
-    print('No YAML files found in examples directory')
-    sys.exit(0)
+        if not os.path.exists(SCHEMA_FILE):
+            print(f'❌ Schema file not found: {SCHEMA_FILE}')
+            sys.exit(1)
 
-for yaml_file in yaml_files:
-    print(f'Validating {yaml_file} with jsonschema')
-    try:
-        with open(yaml_file) as f:
-            data = yaml.safe_load(f)
-        jsonschema.validate(data, schema)
-        print(f'Valid: {yaml_file}')
-    except jsonschema.exceptions.ValidationError as e:
-        print(f'Invalid: {yaml_file} - {e}')
-        sys.exit(1)
-    except Exception as e:
-        print(f'Error: {yaml_file} - {e}')
-        sys.exit(1)
-EOF
-          python3 validate.py
+        try:
+            with open(SCHEMA_FILE, 'r', encoding='utf-8') as f:
+                schema = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"❌ Error decoding schema JSON from {SCHEMA_FILE}: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"❌ Unexpected error loading schema {SCHEMA_FILE}: {e}")
+            sys.exit(1)
+
+        yaml_files = glob.glob(EXAMPLES_GLOB, recursive=True)
+        # Also find .yml files if your examples might use that extension
+        # yaml_files.extend(glob.glob('examples/**/*.yml', recursive=True))
+        # yaml_files = list(set(yaml_files)) # Remove duplicates if any
+
+        if not yaml_files:
+            print('⚠️ No YAML/YML files found in examples directory matching the pattern. Validation skipped.')
+            # Depending on requirements, you might want to exit 0 or 1 here.
+            # If examples are mandatory, this should be an error.
+            # sys.exit(0) # Exiting 0 if no files is acceptable.
+            sys.exit(0) 
+
+
+        print(f"Found {len(yaml_files)} example file(s) to validate.")
+
+        for yaml_file in yaml_files:
+            print(f'---> Validating {yaml_file} with jsonschema (Python)')
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                jsonschema.validate(instance=data, schema=schema)
+                print(f'✅ {yaml_file} is valid')
+            except FileNotFoundError: # Should ideally not happen if glob worked
+                print(f"❌ File not found during iteration: {yaml_file}")
+                ALL_VALID = False
+            except yaml.YAMLError as e:
+                print(f"❌ Error parsing YAML from {yaml_file}: {e}")
+                ALL_VALID = False
+            except jsonschema.exceptions.ValidationError as e:
+                print(f'❌ {yaml_file} is invalid:')
+                print(f"    Error: {e.message}")
+                print(f"    Path: {list(e.path)}")
+                ALL_VALID = False
+            except Exception as e:
+                print(f'❌ An unexpected error occurred validating {yaml_file}: {e}')
+                ALL_VALID = False
+
+        if not ALL_VALID:
+            print("--- ❌ Some Python jsonschema validations FAILED ---")
+            sys.exit(1)
+        else:
+            print("--- ✅ All Python jsonschema validations PASSED ---")
+            sys.exit(0)
+        EOF
+          # Ensure python3 is used if python might point to python2 in some environments
+          python3 validate_with_jsonschema.py 
         fi
