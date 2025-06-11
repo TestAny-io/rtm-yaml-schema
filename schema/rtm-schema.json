@@ -78,16 +78,16 @@
         "properties": {
           "version": {
             "type": "string",
-            "description": "版本号，需符合semver规范，前两位应始终与SRS的版本号一致，Published状态下版本号不应低于SRS的版本号",
+            "description": "Version number, must follow semver specification, first two digits should always match SRS version number, version number should not be lower than SRS version number in Published state",
             "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
           },
           "title": {
             "type": "string",
-            "description": "标题，必填"
+            "description": "Title, required"
           },
           "description": {
             "type": "string",
-            "description": "描述，选填"
+            "description": "Description, optional"
           },
           "contact": {
             "type": "object",
@@ -102,17 +102,17 @@
           "created": {
             "type": "string",
             "format": "date",
-            "description": "创建时间，必填"
+            "description": "Created time, required"
           },
           "updated": {
             "type": "string",
             "format": "date",
-            "description": "更新时间，必填"
+            "description": "Updated time, required"
           },
           "status": {
             "type": "string",
             "enum": ["Draft", "Published", "Deprecated", "Archived"],
-            "description": "状态，必填"
+            "description": "Status, required"
           }
         },
         "required": [
@@ -131,31 +131,31 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "需求ID，必填 (e.g., FR-XXX-001, NFR-XXX-001)",
+            "description": "Requirement ID, required (e.g., FR-XXX-001, NFR-XXX-001)",
             "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"
           },
           "summary": {
             "type": "string",
-            "description": "需求名称/摘要，必填"
+            "description": "Requirement name/summary, required"
           },
           "description": {
             "type": ["string", "array"],
             "items": {"type": "string"},
-            "description": "需求描述，string或array, 必填"
+            "description": "Requirement description, string or array, required"
           },
           "type": {
             "type": "string",
             "enum": ["Functional", "Non-Functional"],
-            "description": "需求类型，必填"
+            "description": "Requirement type, required"
           },
           "priority": {
             "type": "string",
             "enum": ["Critical", "High", "Medium", "Low"],
-            "description": "优先级，必填"
+            "description": "Priority, required"
           },
           "srs_info": {
             "type": "object",
-            "description": "需求关联的SRS信息，选填",
+            "description": "Requirement related SRS information, optional",
             "properties": {
               "business_objectives": {"type": ["string", "array"], "items": {"type": "string"}},
               "business_rules": {"type": ["string", "array"], "items": {"type": "string"}},
@@ -181,7 +181,7 @@
           },
           "hld_info": {
             "type": "object",
-            "description": "需求关联的HLD信息，选填",
+            "description": "Requirement related HLD information, optional",
             "properties": {
               "adr_ids": {"type": "array", "items": {"type": "string", "pattern": "^ADR-[A-Z0-9_]+-\\d+$"}},
               "assumption_ids": {"type": "array", "items": {"type": "string", "pattern": "^ASSUMPTION-[A-Z0-9_]+-\\d+$"}},
@@ -191,7 +191,7 @@
           },
           "component_info": {
             "type": "object",
-            "description": "需求关联的Component信息，选填",
+            "description": "Requirement related Component information, optional",
             "properties": {
               "component_ids": {"type": "array", "items": {"type": "string", "pattern": "^COMP-[A-Z0-9_]+-\\d+$"}}
             },
@@ -199,7 +199,7 @@
           },
           "test_info": {
             "type": "object",
-            "description": "需求关联的测试信息，选填",
+            "description": "Requirement related test information, optional",
             "properties": {
               "testcase_ids": {"type": "array", "items": {"type": "string", "pattern": "^TC-[A-Z0-9_]+-\\d+$"}}
             },
@@ -207,7 +207,7 @@
           },
           "risk_info": {
             "type": "object",
-            "description": "需求关联的风险信息，选填",
+            "description": "Requirement related risk information, optional",
             "properties": {
               "linked_risk_ids": {"type": "array", "items": {"type": "string", "pattern": "^RISK-[A-Z0-9_]+-\\d+$"}}
             },
@@ -215,7 +215,7 @@
           },
           "change_request_info": {
             "type": "object",
-            "description": "需求关联的变更请求信息，选填",
+            "description": "Requirement related change request information, optional",
             "properties": {
               "linked_change_request_ids": {"type": "array", "items": {"type": "string", "pattern": "^CR-[A-Z0-9_]+-\\d+$"}}
             },
