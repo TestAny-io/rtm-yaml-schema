@@ -131,16 +131,16 @@ jobs:
       
     - name: Create yamllint config
       run: |
-        cat > .yamllint << 'EOF'
-extends: default
-rules:
-  line-length:
-    max: 120
-  indentation:
-    spaces: 2
-  comments:
-    min-spaces-from-content: 1
-EOF
+        cat > .yamllint.yml << 'EOF'
+        extends: default
+        rules:
+          line-length:
+            max: 120
+          indentation:
+            spaces: 2
+          comments:
+            min-spaces-from-content: 1
+        EOF
         
     - name: Lint YAML files
       run: |
@@ -168,22 +168,22 @@ EOF
     - name: Create link-check config
       run: |
         cat > .markdown-link-check.json << 'EOF'
-{
-  "ignorePatterns": [
-    {
-      "pattern": "^https://github.com/yourusername"
-    },
-    {
-      "pattern": "^mailto:"
-    }
-  ],
-  "timeout": "20s",
-  "retryOn429": true,
-  "retryCount": 2,
-  "fallbackRetryDelay": "30s",
-  "aliveStatusCodes": [200, 206]
-}
-EOF
+        {
+          "ignorePatterns": [
+            {
+              "pattern": "^https://github.com/yourusername"
+            },
+            {
+              "pattern": "^mailto:"
+            }
+          ],
+          "timeout": "20s",
+          "retryOn429": true,
+          "retryCount": 2,
+          "fallbackRetryDelay": "30s",
+          "aliveStatusCodes": [200, 206]
+        }
+        EOF
       
     - name: Check links in documentation
       run: |
@@ -233,7 +233,7 @@ EOF
             echo "No example files found for ajv-cli validation"
           fi
         elif [ "${{ matrix.validator }}" = "jsonschema" ]; then
-          cat > validate_with_jsonschema.py << 'EOF'
+          python3 -c "
 import json
 import yaml
 import jsonschema
@@ -243,7 +243,7 @@ import os
 
 # Check if schema file exists
 if not os.path.exists('schema/rtm-schema.json'):
-    print("❌ Schema file not found: schema/rtm-schema.json")
+    print('❌ Schema file not found: schema/rtm-schema.json')
     sys.exit(1)
 
 with open('schema/rtm-schema.json') as f:
@@ -251,7 +251,7 @@ with open('schema/rtm-schema.json') as f:
 
 yaml_files = glob.glob('examples/**/*.yaml', recursive=True)
 if not yaml_files:
-    print("No YAML files found in examples directory")
+    print('No YAML files found in examples directory')
     sys.exit(0)
 
 for yaml_file in yaml_files:
@@ -267,6 +267,5 @@ for yaml_file in yaml_files:
     except Exception as e:
         print(f'❌ Error processing {yaml_file}: {e}')
         sys.exit(1)
-EOF
-          python validate_with_jsonschema.py
+"
         fi
