@@ -233,7 +233,7 @@ jobs:
             echo "No example files found for ajv-cli validation"
           fi
         elif [ "${{ matrix.validator }}" = "jsonschema" ]; then
-          python3 -c "
+          cat > validate.py << 'EOF'
 import json
 import yaml
 import jsonschema
@@ -241,9 +241,8 @@ import glob
 import sys
 import os
 
-# Check if schema file exists
 if not os.path.exists('schema/rtm-schema.json'):
-    print('❌ Schema file not found: schema/rtm-schema.json')
+    print('Schema file not found: schema/rtm-schema.json')
     sys.exit(1)
 
 with open('schema/rtm-schema.json') as f:
@@ -260,12 +259,13 @@ for yaml_file in yaml_files:
         with open(yaml_file) as f:
             data = yaml.safe_load(f)
         jsonschema.validate(data, schema)
-        print(f'✅ {yaml_file} is valid')
+        print(f'Valid: {yaml_file}')
     except jsonschema.exceptions.ValidationError as e:
-        print(f'❌ {yaml_file} is invalid: {e}')
+        print(f'Invalid: {yaml_file} - {e}')
         sys.exit(1)
     except Exception as e:
-        print(f'❌ Error processing {yaml_file}: {e}')
+        print(f'Error: {yaml_file} - {e}')
         sys.exit(1)
-"
+EOF
+          python3 validate.py
         fi
