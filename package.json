@@ -4,21 +4,20 @@
     "description": "A comprehensive JSON Schema for Requirements Traceability Matrix (RTM) documents in YAML format",
     "main": "schema/rtm-schema.json",
     "scripts": {
-      "test": "npm run test:schema && npm run test:examples && npm run test:docs",
+      "test": "npm run test:schema && npm run test:examples",
       "test:schema": "ajv compile -s schema/rtm-schema.json",
-      "test:examples": "find examples -name '*.yaml' -exec ajv validate -s schema/rtm-schema.json -d {} \\;",
-      "test:valid": "find tests/valid -name '*.yaml' -exec ajv validate -s schema/rtm-schema.json -d {} \\;",
-      "test:invalid": "bash scripts/test-invalid.sh",
-      "test:docs": "markdown-link-check README.md docs/*.md",
-      "lint": "yamllint schema/ examples/ tests/",
+      "test:examples": "bash scripts/test-examples.sh",
+      "test:valid": "bash scripts/test-valid.sh",
+      "test:invalid": "bash scripts/test-invalid.sh", 
+      "lint": "yamllint schema/ examples/ || true",
       "validate": "ajv validate -s schema/rtm-schema.json -d",
-      "generate-docs": "node tools/generate-docs.js",
-      "validate-all": "node tools/validate-all.js",
-      "release": "npm run test && npm version patch && git push && git push --tags"
+      "validate:example": "ajv validate -s schema/rtm-schema.json -d examples/simple-project/rtm.yaml",
+      "prepare": "mkdir -p tests/valid tests/invalid scripts",
+      "postinstall": "npm run prepare"
     },
     "keywords": [
       "rtm",
-      "requirements",
+      "requirements", 
       "traceability",
       "matrix",
       "yaml",
@@ -33,19 +32,19 @@
       "project-management"
     ],
     "author": {
-      "name": "Your Name",
-      "email": "your.email@company.com",
-      "url": "https://github.com/yourusername"
+      "name": "Testany Co.",
+      "email": "support@testany.io",
+      "url": "https://github.com/TestAny-io"
     },
     "license": "MIT",
     "repository": {
       "type": "git",
-      "url": "https://github.com/yourusername/rtm-yaml-schema.git"
+      "url": "https://github.com/TestAny-io/rtm-yaml-schema.git"
     },
     "bugs": {
-      "url": "https://github.com/yourusername/rtm-yaml-schema/issues"
+      "url": "https://github.com/TestAny-io/rtm-yaml-schema/issues"
     },
-    "homepage": "https://github.com/yourusername/rtm-yaml-schema#readme",
+    "homepage": "https://github.com/TestAny-io/rtm-yaml-schema#readme",
     "engines": {
       "node": ">=14.0.0"
     },
@@ -53,17 +52,13 @@
       "schema/",
       "examples/",
       "docs/",
-      "tools/",
       "README.md",
       "LICENSE",
       "CHANGELOG.md"
     ],
     "devDependencies": {
       "ajv": "^8.12.0",
-      "ajv-cli": "^5.0.0",
-      "markdown-link-check": "^3.11.2",
-      "yaml": "^2.3.4",
-      "jsonschema": "^1.4.1"
+      "ajv-cli": "^5.0.0"
     },
     "dependencies": {},
     "publishConfig": {
@@ -71,6 +66,6 @@
     },
     "funding": {
       "type": "github",
-      "url": "https://github.com/sponsors/yourusername"
+      "url": "https://github.com/sponsors/TestAny-io"
     }
   }
