@@ -1,0 +1,76 @@
+{
+    "name": "rtm-yaml-schema",
+    "version": "1.0.0",
+    "description": "A comprehensive JSON Schema for Requirements Traceability Matrix (RTM) documents in YAML format",
+    "main": "schema/rtm-schema.json",
+    "scripts": {
+      "test": "npm run test:schema && npm run test:examples && npm run test:docs",
+      "test:schema": "ajv compile -s schema/rtm-schema.json",
+      "test:examples": "find examples -name '*.yaml' -exec ajv validate -s schema/rtm-schema.json -d {} \\;",
+      "test:valid": "find tests/valid -name '*.yaml' -exec ajv validate -s schema/rtm-schema.json -d {} \\;",
+      "test:invalid": "bash scripts/test-invalid.sh",
+      "test:docs": "markdown-link-check README.md docs/*.md",
+      "lint": "yamllint schema/ examples/ tests/",
+      "validate": "ajv validate -s schema/rtm-schema.json -d",
+      "generate-docs": "node tools/generate-docs.js",
+      "validate-all": "node tools/validate-all.js",
+      "release": "npm run test && npm version patch && git push && git push --tags"
+    },
+    "keywords": [
+      "rtm",
+      "requirements",
+      "traceability",
+      "matrix",
+      "yaml",
+      "schema",
+      "json-schema",
+      "validation",
+      "software-engineering",
+      "requirements-management",
+      "srs",
+      "software-requirements",
+      "documentation",
+      "project-management"
+    ],
+    "author": {
+      "name": "Your Name",
+      "email": "your.email@company.com",
+      "url": "https://github.com/yourusername"
+    },
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/yourusername/rtm-yaml-schema.git"
+    },
+    "bugs": {
+      "url": "https://github.com/yourusername/rtm-yaml-schema/issues"
+    },
+    "homepage": "https://github.com/yourusername/rtm-yaml-schema#readme",
+    "engines": {
+      "node": ">=14.0.0"
+    },
+    "files": [
+      "schema/",
+      "examples/",
+      "docs/",
+      "tools/",
+      "README.md",
+      "LICENSE",
+      "CHANGELOG.md"
+    ],
+    "devDependencies": {
+      "ajv": "^8.12.0",
+      "ajv-cli": "^5.0.0",
+      "markdown-link-check": "^3.11.2",
+      "yaml": "^2.3.4",
+      "jsonschema": "^1.4.1"
+    },
+    "dependencies": {},
+    "publishConfig": {
+      "access": "public"
+    },
+    "funding": {
+      "type": "github",
+      "url": "https://github.com/sponsors/yourusername"
+    }
+  }

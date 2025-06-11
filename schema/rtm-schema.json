@@ -1,0 +1,512 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RTM Document Schema",
+    "description": "Schema for the Requirements Traceability Matrix (RTM) document and its related artifacts.",
+    "type": "object",
+    "properties": {
+      "info": {
+        "$ref": "#/definitions/Info"
+      },
+      "requirement": {
+        "type": "array",
+        "description": "List of all requirements (functional and non-functional).",
+        "items": {
+          "$ref": "#/definitions/Requirement"
+        },
+        "minItems": 1
+      },
+      "adr": {
+        "type": "array",
+        "description": "List of Architecture Decision Records.",
+        "items": {
+          "$ref": "#/definitions/ADR"
+        }
+      },
+      "assumption": {
+        "type": "array",
+        "description": "List of project assumptions.",
+        "items": {
+          "$ref": "#/definitions/Assumption"
+        }
+      },
+      "issue": {
+        "type": "array",
+        "description": "List of tracked issues.",
+        "items": {
+          "$ref": "#/definitions/Issue"
+        }
+      },
+      "component": {
+        "type": "array",
+        "description": "List of software components.",
+        "items": {
+          "$ref": "#/definitions/Component"
+        }
+      },
+      "testcase": {
+        "type": "array",
+        "description": "List of test cases.",
+        "items": {
+          "$ref": "#/definitions/TestCase"
+        }
+      },
+      "risk": {
+        "type": "array",
+        "description": "List of identified risks.",
+        "items": {
+          "$ref": "#/definitions/Risk"
+        }
+      },
+      "change_request": {
+        "type": "array",
+        "description": "List of change requests.",
+        "items": {
+          "$ref": "#/definitions/ChangeRequest"
+        }
+      }
+    },
+    "required": [
+      "info",
+      "requirement"
+    ],
+    "additionalProperties": true,
+  
+    "definitions": {
+      "Info": {
+        "type": "object",
+        "description": "Document metadata.",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "版本号，需符合semver规范，前两位应始终与SRS的版本号一致，Published状态下版本号不应低于SRS的版本号",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+          },
+          "title": {
+            "type": "string",
+            "description": "标题，必填"
+          },
+          "description": {
+            "type": "string",
+            "description": "描述，选填"
+          },
+          "contact": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "email": {"type": "string", "format": "email"},
+              "employee_id": {"type": "string"}
+            },
+            "required": ["name", "email"],
+            "additionalProperties": true
+          },
+          "created": {
+            "type": "string",
+            "format": "date",
+            "description": "创建时间，必填"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date",
+            "description": "更新时间，必填"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["Draft", "Published", "Deprecated", "Archived"],
+            "description": "状态，必填"
+          }
+        },
+        "required": [
+          "version",
+          "title",
+          "created",
+          "updated",
+          "status"
+        ],
+        "additionalProperties": true
+      },
+  
+      "Requirement": {
+        "type": "object",
+        "description": "A single requirement (functional or non-functional).",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "需求ID，必填 (e.g., FR-XXX-001, NFR-XXX-001)",
+            "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"
+          },
+          "summary": {
+            "type": "string",
+            "description": "需求名称/摘要，必填"
+          },
+          "description": {
+            "type": ["string", "array"],
+            "items": {"type": "string"},
+            "description": "需求描述，string或array, 必填"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["Functional", "Non-Functional"],
+            "description": "需求类型，必填"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low"],
+            "description": "优先级，必填"
+          },
+          "srs_info": {
+            "type": "object",
+            "description": "需求关联的SRS信息，选填",
+            "properties": {
+              "business_objectives": {"type": ["string", "array"], "items": {"type": "string"}},
+              "business_rules": {"type": ["string", "array"], "items": {"type": "string"}},
+              "user_story": {"type": ["string", "array"], "items": {"type": "string"}},
+              "metrics": {"type": ["string", "array"], "items": {"type": "string"}},
+              "category_and_complexity": {
+                "type": "object",
+                "properties": {
+                  "category": {"type": "string"},
+                  "complexity": {"type": "string", "enum": ["Small", "Medium", "Large", "XLarge"]}
+                },
+                "required": ["category"], 
+                "additionalProperties": false
+              },
+              "acceptance_criteria": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1
+              }
+            },
+            "required": ["category_and_complexity", "acceptance_criteria"],
+            "additionalProperties": false
+          },
+          "hld_info": {
+            "type": "object",
+            "description": "需求关联的HLD信息，选填",
+            "properties": {
+              "adr_ids": {"type": "array", "items": {"type": "string", "pattern": "^ADR-[A-Z0-9_]+-\\d+$"}},
+              "assumption_ids": {"type": "array", "items": {"type": "string", "pattern": "^ASSUMPTION-[A-Z0-9_]+-\\d+$"}},
+              "issue_ids": {"type": "array", "items": {"type": "string", "pattern": "^ISSUE-[A-Z0-9_]+-\\d+$"}}
+            },
+            "additionalProperties": false
+          },
+          "component_info": {
+            "type": "object",
+            "description": "需求关联的Component信息，选填",
+            "properties": {
+              "component_ids": {"type": "array", "items": {"type": "string", "pattern": "^COMP-[A-Z0-9_]+-\\d+$"}}
+            },
+            "additionalProperties": false
+          },
+          "test_info": {
+            "type": "object",
+            "description": "需求关联的测试信息，选填",
+            "properties": {
+              "testcase_ids": {"type": "array", "items": {"type": "string", "pattern": "^TC-[A-Z0-9_]+-\\d+$"}}
+            },
+            "additionalProperties": false
+          },
+          "risk_info": {
+            "type": "object",
+            "description": "需求关联的风险信息，选填",
+            "properties": {
+              "linked_risk_ids": {"type": "array", "items": {"type": "string", "pattern": "^RISK-[A-Z0-9_]+-\\d+$"}}
+            },
+            "additionalProperties": false
+          },
+          "change_request_info": {
+            "type": "object",
+            "description": "需求关联的变更请求信息，选填",
+            "properties": {
+              "linked_change_request_ids": {"type": "array", "items": {"type": "string", "pattern": "^CR-[A-Z0-9_]+-\\d+$"}}
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "summary",
+          "description",
+          "type",
+          "priority"
+        ],
+        "additionalProperties": true 
+      },
+  
+      "ADR": {
+        "type": "object",
+        "description": "Architecture Decision Record.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^ADR-[A-Z0-9_]+-\\d+$"},
+          "type": {"type": "string", "enum": ["ADR"]}, 
+          "summary": {"type": "string"},
+          "linked_requirement_ids": {"type": "array", "items": {"type": "string", "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"}, "minItems": 1},
+          "status": {"type": "string", "enum": ["Proposed", "Accepted", "Rejected", "Deprecated", "Superseded", "Archived"]},
+          "effective_date": {"type": "string", "format": "date"},
+          "decision": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "decision_drivers": {"type": "array", "items": {"type": ["string", "array"], "items": {"type": "string"}}},
+          "consequences": {
+            "type": "object",
+            "properties": {
+              "positive": {"type": ["string", "array"], "items": {"type": "string"}},
+              "negative": {"type": ["string", "array"], "items": {"type": "string"}}
+            },
+            "required": [], 
+            "additionalProperties": false
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                  "name": {"type": "string"},
+                  "description": {"type": "string"},
+                  "pros": {"type": "array", "items": {"type": "string"}},
+                  "cons": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["name"],
+              "additionalProperties": false
+            }
+          },
+          "doc_links": {"type": "array", "items": {"type": "string", "format": "uri-reference"}},
+          "drafted_by": {"type": "array", "items": {"type": "string"}},
+          "drafted_at": {"type": "string", "format": "date"},
+          "last_reviewed_by": {"type": "array", "items": {"type": "string"}},
+          "last_reviewed_at": {"type": "string", "format": "date"},
+          "approved_by": {"type": "array", "items": {"type": "string"}},
+          "approved_at": {"type": "string", "format": "date"},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "superseded_by_adr_id": {"type": ["string", "null"], "pattern": "^ADR-[A-Z0-9_]+-\\d+$"},
+          "supersedes_adr_id": {"type": ["string", "null"], "pattern": "^ADR-[A-Z0-9_]+-\\d+$"}
+        },
+        "required": [
+          "id",
+          "type", 
+          "summary",
+          "linked_requirement_ids",
+          "status",
+          "effective_date",
+          "decision",
+          "consequences"
+        ],
+        "additionalProperties": true
+      },
+  
+      "Assumption": {
+        "type": "object",
+        "description": "Project Assumption.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^ASSUMPTION-[A-Z0-9_]+-\\d+$"},
+          "type": {"type": "string", "enum": ["Assumption"]}, 
+          "summary": {"type": "string"},
+          "description": {"type": "string"},
+          "linked_requirement_ids": {"type": "array", "items": {"type": "string", "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"}, "minItems": 1},
+          "status": {"type": "string", "enum": ["Draft", "Proposed", "Accepted", "Rejected", "Deprecated", "Closed", "Validated", "Invalidated"]},
+          "effective_date": {"type": "string", "format": "date"},
+          "validated_until": {"type": "string", "format": "date"},
+          "risk_level": {"type": "string", "enum": ["Low", "Medium", "High"]},
+          "impact_analysis": {"type": "string"}, 
+          "mitigation_plan": {"type": "array", "items": {"type": "string"}},
+          "owned_by": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "doc_links": {"type": "array", "items": {"type": "string", "format": "uri-reference"}},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "reviewed_by": {"type": "array", "items": {"type": "string"}},
+          "reviewed_at": {"type": "string", "format": "date"}
+        },
+        "required": [
+          "id",
+          "type", 
+          "summary",
+          "linked_requirement_ids",
+          "status",
+          "effective_date",
+          "owned_by"
+        ],
+        "additionalProperties": true
+      },
+  
+      "Issue": {
+        "type": "object",
+        "description": "Tracked Issue.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^ISSUE-[A-Z0-9_]+-\\d+$"},
+          "type": {"type": "string", "enum": ["Issue"]}, 
+          "summary": {"type": "string"},
+          "description": {"type": "string"},
+          "linked_requirement_ids": {"type": "array", "items": {"type": "string", "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"}},
+          "status": {"type": "string", "enum": ["Open", "In_Progress", "Resolved", "Closed", "Wont_Fix", "Deferred"]}, 
+          "priority": {"type": "string", "enum": ["Blocker", "Critical", "High", "Medium", "Low"]},
+          "severity": {"type": "string", "enum": ["Critical", "Major", "Minor", "Trivial"]},
+          "reported_by": {"type": "string"},
+          "reported_at": {"type": "string", "format": "date"},
+          "risk_level": {"type": "string", "enum": ["Low", "Medium", "High", "Critical"]},
+          "impact_analysis": {"type": "array", "items": {"type": "string"}}, 
+          "mitigation_plan": {"type": "array", "items": {"type": "string"}},
+          "resolution": {"type": "string"},
+          "assignee": {"type": "string"}, 
+          "due_date": {"type": "string", "format": "date"},
+          "owned_by": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "doc_links": {"type": "array", "items": {"type": "string", "format": "uri-reference"}},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "reviewed_by": {"type": "array", "items": {"type": "string"}},
+          "reviewed_at": {"type": "string", "format": "date"}
+        },
+        "required": [
+          "id",
+          "type", 
+          "summary",
+          "status",
+          "owned_by"
+        ],
+        "additionalProperties": true
+      },
+  
+      "Component": {
+        "type": "object",
+        "description": "Software Component.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^COMP-[A-Z0-9_]+-\\d+$"},
+          "type": {"type": "string", "enum": ["COMP"]}, 
+          "name": {"type": "string"},
+          "version": {"type": "string"},
+          "description": {"type": "string"},
+          "owned_by": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "requirement_ids": {"type": "array", "items": {"type": "string", "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"}, "minItems": 1},
+          "adr_ids": {"type": "array", "items": {"type": "string", "pattern": "^ADR-[A-Z0-9_]+-\\d+$"}},
+          "status": {"type": "string", "enum": ["Draft", "Planned", "In_Progress", "Implemented", "Deprecated", "Archived"]},
+          "effective_date": {"type": "string", "format": "date"},
+          "doc_links": {"type": "array", "items": {"type": "string", "format": "uri-reference"}},
+          "drafted_by": {"type": "array", "items": {"type": "string"}},
+          "drafted_at": {"type": "string", "format": "date"},
+          "reviewed_by": {"type": "array", "items": {"type": "string"}}, 
+          "tech_details": {
+            "type": "object",
+            "properties": {
+              "layer": {"type": "string"},
+              "tech_stack": {"type": "array", "items": {"type": "string"}},
+              "interfaces": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "type": {"type": "string"} 
+                  },
+                  "required": ["name"],
+                  "additionalProperties": true
+                }
+              },
+              "data_models": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"}
+                  },
+                  "required": ["name"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["layer", "tech_stack"], 
+            "additionalProperties": true
+          },
+          "linked_risk_ids": {"type": "array", "items": {"type": "string", "pattern": "^RISK-[A-Z0-9_]+-\\d+$"}}
+        },
+        "required": [
+          "id",
+          "type", 
+          "name",
+          "owned_by",
+          "requirement_ids",
+          "status",
+          "effective_date",
+          "tech_details"
+        ],
+        "additionalProperties": true
+      },
+  
+      "TestCase": {
+        "type": "object",
+        "description": "Test Case.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^TC-[A-Z0-9_]+-\\d+$"},
+          "summary": {"type": "string"},
+          "description": {"type": "string"},
+          "type": {"type": "string", "enum": ["Functional", "Performance", "Security", "Usability", "Compatibility", "Regression", "Smoke", "Acceptance", "Unit", "Integration", "System"]},
+          "priority": {"type": "string", "enum": ["Blocker", "Critical", "High", "Medium", "Low"]},
+          "requirement_ids": {"type": "array", "items": {"type": "string", "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"}, "minItems": 1},
+          "component_ids": {"type": "array", "items": {"type": "string", "pattern": "^COMP-[A-Z0-9_]+-\\d+$"}},
+          "method": {"type": "string", "enum": ["Test", "Demonstration", "Analysis", "Inspection", "Review"]},
+          "verification_timing": {"type": "string", "enum": ["Requirement", "Prototype", "Design", "Development", "Deployment", "Release"]},
+          "status": {"type": "string", "enum": ["Draft", "Ready_for_Review", "Approved", "Rework", "Deprecated"]}, 
+          "linked_issue_ids": {"type": "array", "items": {"type": "string", "pattern": "^ISSUE-[A-Z0-9_]+-\\d+$"}},
+          "tags": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": [
+          "id",
+          "summary",
+          "requirement_ids",
+          "status" 
+        ],
+        "additionalProperties": true
+      },
+  
+      "Risk": {
+        "type": "object",
+        "description": "Identified Risk.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^RISK-[A-Z0-9_]+-\\d+$"},
+          "summary": {"type": "string"},
+          "description": {"type": "string"},
+          "type": {"type": "string", "enum": ["Technical", "Business", "Schedule", "Resource", "Security", "External"]},
+          "likelihood": {"type": "string", "enum": ["Very_High", "High", "Medium", "Low", "Very_Low"]},
+          "risk_level": {"type": "string", "enum": ["Catastrophic", "Critical", "Major", "Moderate", "Minor"]}, 
+          "severity": {"type": "string", "enum": ["Critical", "High", "Medium", "Low"]}, 
+          "status": {"type": "string", "enum": ["Identified", "Analyzed", "Mitigating", "Monitoring", "Resolved", "Closed", "Avoided"]},
+          "mitigation_strategy": {"type": "array", "items": {"type": "string"}}, 
+          "contingency_plan": {"type": "string"},
+          "owner": {"type": "string"}, 
+          "due_date": {"type": "string"}, 
+          "linked_requirement_ids": {"type": "array", "items": {"type": "string", "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"}},
+          "linked_component_ids": {"type": "array", "items": {"type": "string", "pattern": "^COMP-[A-Z0-9_]+-\\d+$"}},
+          "tags": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": [
+          "id",
+          "summary",
+          "status"
+        ],
+        "additionalProperties": true
+      },
+  
+      "ChangeRequest": {
+        "type": "object",
+        "description": "Change Request.",
+        "properties": {
+          "id": {"type": "string", "pattern": "^CR-[A-Z0-9_]+-\\d+$"},
+          "summary": {"type": "string"},
+          "description": {"type": "string"},
+          "requested_by": {"type": "string"},
+          "request_date": {"type": "string", "format": "date"},
+          "status": {"type": "string", "enum": ["Submitted", "Under_Review", "Approved", "Rejected", "Implemented", "Verified", "Closed", "Deferred"]},
+          "priority": {"type": "string", "enum": ["Blocker", "Critical", "High", "Medium", "Low"]},
+          "linked_requirement_ids": {"type": "array", "items": {"type": "string"}}, 
+          "impact_analysis": {"type": "string"},
+          "resolution": {"type": "string"}, 
+          "approved_by": {"type": "string"}, 
+          "approved_at": {"type": "string", "format": "date"},
+          "implemented_by": {"type": "array", "items": {"type": "string"}},
+          "implemented_at": {"type": "string", "format": "date"},
+          "tags": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": [
+          "id",
+          "summary",
+          "status"
+        ],
+        "additionalProperties": true
+      }
+    }
+  }

@@ -1,0 +1,197 @@
+name: Schema Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-schema:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        npm install -g ajv-cli
+        npm install
+        
+    - name: Validate schema itself
+      run: |
+        echo "Validating RTM schema against JSON Schema meta-schema..."
+        ajv compile -s schema/rtm-schema.json
+        
+    - name: Validate all example files
+      run: |
+        echo "Validating all example RTM files..."
+        find examples -name "*.yaml" -o -name "*.yml" | while read file; do
+          echo "Validating $file"
+          ajv validate -s schema/rtm-schema.json -d "$file"
+        done
+        
+    - name: Test valid examples
+      run: |
+        echo "Testing valid examples..."
+        find tests/valid -name "*.yaml" -o -name "*.yml" | while read file; do
+          echo "Validating $file (should pass)"
+          if ! ajv validate -s schema/rtm-schema.json -d "$file"; then
+            echo "❌ FAILED: $file should be valid but validation failed"
+            exit 1
+          else
+            echo "✅ PASSED: $file is valid"
+          fi
+        done
+        
+    - name: Test invalid examples
+      run: |
+        echo "Testing invalid examples..."
+        find tests/invalid -name "*.yaml" -o -name "*.yml" | while read file; do
+          echo "Validating $file (should fail)"
+          if ajv validate -s schema/rtm-schema.json -d "$file" 2>/dev/null; then
+            echo "❌ FAILED: $file should be invalid but validation passed"
+            exit 1
+          else
+            echo "✅ PASSED: $file correctly failed validation"
+          fi
+        done
+        
+    - name: Generate validation report
+      run: |
+        echo "## Validation Report" > validation-report.md
+        echo "" >> validation-report.md
+        echo "### Schema Validation: ✅ PASSED" >> validation-report.md
+        echo "### Example Files:" >> validation-report.md
+        
+        valid_count=$(find examples -name "*.yaml" -o -name "*.yml" | wc -l)
+        echo "- Valid examples: $valid_count files ✅" >> validation-report.md
+        
+        test_valid_count=$(find tests/valid -name "*.yaml" -o -name "*.yml" | wc -l)
+        echo "- Test valid: $test_valid_count files ✅" >> validation-report.md
+        
+        test_invalid_count=$(find tests/invalid -name "*.yaml" -o -name "*.yml" | wc -l)  
+        echo "- Test invalid: $test_invalid_count files ✅" >> validation-report.md
+        
+        echo "" >> validation-report.md
+        echo "All validations completed successfully! 🎉" >> validation-report.md
+        
+        cat validation-report.md
+        
+    - name: Upload validation report
+      uses: actions/upload-artifact@v4
+      with:
+        name: validation-report
+        path: validation-report.md
+
+  lint-yaml:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install yamllint
+      run: pip install yamllint
+      
+    - name: Lint YAML files
+      run: |
+        echo "Linting all YAML files..."
+        find . -name "*.yaml" -o -name "*.yml" | grep -v node_modules | while read file; do
+          echo "Linting $file"
+          yamllint "$file"
+        done
+
+  check-links:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js  
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install markdown-link-check
+      run: npm install -g markdown-link-check
+      
+    - name: Check links in documentation
+      run: |
+        echo "Checking links in documentation..."
+        find . -name "*.md" | while read file; do
+          echo "Checking links in $file"
+          markdown-link-check "$file" --config .markdown-link-check.json || true
+        done
+
+  validate-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        validator: ['ajv-cli', 'jsonschema']
+        
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install validators
+      run: |
+        if [ "${{ matrix.validator }}" = "ajv-cli" ]; then
+          npm install -g ajv-cli
+        elif [ "${{ matrix.validator }}" = "jsonschema" ]; then
+          pip install jsonschema pyyaml
+        fi
+        
+    - name: Validate with ${{ matrix.validator }}
+      run: |
+        if [ "${{ matrix.validator }}" = "ajv-cli" ]; then
+          find examples -name "*.yaml" | while read file; do
+            echo "Validating $file with ajv-cli"
+            ajv validate -s schema/rtm-schema.json -d "$file"
+          done
+        elif [ "${{ matrix.validator }}" = "jsonschema" ]; then
+          cat > validate_with_jsonschema.py << 'EOF'
+import json
+import yaml
+import jsonschema
+import glob
+import sys
+
+with open('schema/rtm-schema.json') as f:
+    schema = json.load(f)
+
+for yaml_file in glob.glob('examples/**/*.yaml', recursive=True):
+    print(f'Validating {yaml_file} with jsonschema')
+    with open(yaml_file) as f:
+        data = yaml.safe_load(f)
+    try:
+        jsonschema.validate(data, schema)
+        print(f'✅ {yaml_file} is valid')
+    except jsonschema.exceptions.ValidationError as e:
+        print(f'❌ {yaml_file} is invalid: {e}')
+        sys.exit(1)
+EOF
+          python validate_with_jsonschema.py
+        fi

@@ -1,0 +1,145 @@
+# Simple Project RTM Example
+# This example demonstrates a basic RTM structure for a simple user management system
+
+info:
+  version: "1.0.0"
+  title: "User Management System - Requirements Traceability Matrix"
+  description: "RTM for simple user registration and authentication system"
+  contact:
+    name: "John Smith"
+    email: "john.smith@company.com"
+    employee_id: "EMP001"
+  created: "2025-01-15"
+  updated: "2025-01-15"
+  status: "Draft"
+
+requirement:
+  # Functional Requirements - User Management Module
+  - id: "FR-USER-001"
+    summary: "User Registration"
+    description: "System shall allow new users to register with email and password"
+    type: "Functional"
+    priority: "High"
+    srs_info:
+      business_objectives: "Enable user onboarding and account creation"
+      user_story: "As a new user, I want to register an account so that I can access the system"
+      category_and_complexity:
+        category: "User Management"
+        complexity: "Medium"
+      acceptance_criteria:
+        - "User can input valid email address and password"
+        - "System validates email format and password complexity"
+        - "Registration confirmation email is sent"
+        - "User account is created in the database"
+        - "User is redirected to login page after successful registration"
+
+  - id: "FR-USER-002"
+    summary: "User Login"
+    description: "System shall authenticate users with email and password credentials"
+    type: "Functional"
+    priority: "Critical"
+    srs_info:
+      business_objectives: "Secure user authentication and session management"
+      user_story: "As a registered user, I want to login so that I can access my account"
+      category_and_complexity:
+        category: "User Management"
+        complexity: "Small"
+      acceptance_criteria:
+        - "User can login with valid email and password"
+        - "Invalid credentials show appropriate error message"
+        - "Login session is established upon successful authentication"
+        - "User is redirected to dashboard after login"
+
+  - id: "FR-USER-003"
+    summary: "Password Reset"
+    description: "System shall allow users to reset forgotten passwords via email"
+    type: "Functional"
+    priority: "Medium"
+    srs_info:
+      business_objectives: "Reduce support burden and improve user experience"
+      user_story: "As a user who forgot my password, I want to reset it so that I can regain access"
+      category_and_complexity:
+        category: "User Management"
+        complexity: "Medium"
+      acceptance_criteria:
+        - "User can request password reset with email address"
+        - "Reset link is sent to user's email"
+        - "Reset link expires after 24 hours"
+        - "User can set new password using valid reset link"
+
+  # Functional Requirements - Dashboard Module
+  - id: "FR-DASH-001"
+    summary: "User Dashboard"
+    description: "System shall display personalized dashboard after user login"
+    type: "Functional"
+    priority: "Medium"
+    srs_info:
+      business_objectives: "Provide users with overview of their account and activities"
+      user_story: "As a logged-in user, I want to see my dashboard so that I can access key information"
+      category_and_complexity:
+        category: "Dashboard"
+        complexity: "Small"
+      acceptance_criteria:
+        - "Dashboard shows user's name and profile information"
+        - "Dashboard displays recent activity summary"
+        - "Navigation menu is accessible from dashboard"
+
+  # Non-Functional Requirements - Performance
+  - id: "NFR-PERF-001"
+    summary: "Login Response Time"
+    description: "User login shall complete within 2 seconds under normal load"
+    type: "Non-Functional"
+    priority: "High"
+    srs_info:
+      business_objectives: "Ensure good user experience and system responsiveness"
+      metrics: "P95 response time < 2 seconds under 1000 concurrent users"
+      category_and_complexity:
+        category: "Performance"
+        complexity: "Small"
+      acceptance_criteria:
+        - "Login response time measured under 1000 concurrent users"
+        - "P95 response time consistently below 2 seconds"
+        - "No performance degradation during peak hours"
+
+  - id: "NFR-SEC-001"
+    summary: "Password Security"
+    description: "System shall enforce strong password requirements and secure storage"
+    type: "Non-Functional"
+    priority: "Critical"
+    srs_info:
+      business_objectives: "Protect user accounts and comply with security standards"
+      metrics: "100% of passwords hashed with bcrypt, minimum 8 characters with complexity"
+      category_and_complexity:
+        category: "Security"
+        complexity: "Medium"
+      acceptance_criteria:
+        - "Passwords must be minimum 8 characters long"
+        - "Passwords must contain uppercase, lowercase, number, and special character"
+        - "Passwords are hashed using bcrypt with salt"
+        - "Password history prevents reuse of last 5 passwords"
+
+  - id: "NFR-AVAIL-001"
+    summary: "System Availability"
+    description: "System shall maintain 99.9% uptime during business hours"
+    type: "Non-Functional"
+    priority: "High"
+    srs_info:
+      business_objectives: "Ensure reliable service for users and business continuity"
+      metrics: "99.9% uptime measured monthly during 8AM-6PM business hours"
+      category_and_complexity:
+        category: "Availability"
+        complexity: "Large"
+      acceptance_criteria:
+        - "Uptime monitoring tracks availability 24/7"
+        - "Planned maintenance scheduled outside business hours"
+        - "Automatic failover mechanisms in place"
+        - "Maximum 4.3 minutes downtime per month during business hours"
+
+# Empty arrays for future development phases
+adr: []
+assumption: []
+issue: []
+component: []
+testcase: []
+risk: []
+change_request: []
