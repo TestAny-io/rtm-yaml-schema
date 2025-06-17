@@ -14,6 +14,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -37,12 +39,17 @@ jobs:
         # 获取修改的文件列表（相对于 main 分支）
         if [ "${{ github.event_name }}" = "pull_request" ]; then
           # PR 情况：与 target branch 比较
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
         else
-          # Push 情况：与前一个 commit 比较
-          CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
+          # Push 情况：检查这次 push 的所有改动
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            # 不是初始 commit，比较与前一个 commit
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }}..${{ github.event.after }})
+          else
+            # 初始 commit 或 force push，检查当前 commit 的所有文件
+            CHANGED_FILES=$(git diff --name-only --diff-filter=A HEAD)
+          fi
         fi
         
         echo "All changed files:"
@@ -78,11 +85,18 @@ jobs:
         
         # 统计修改的 RTM 文件
         if [ "${{ github.event_name }}" = "pull_request" ]; then
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+          # PR 情况：与 target branch 比较
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
         else
-          CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
+          # Push 情况：检查这次 push 的所有改动
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            # 不是初始 commit，比较与前一个 commit
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }}..${{ github.event.after }})
+          else
+            # 初始 commit 或 force push，检查当前 commit 的所有文件
+            CHANGED_FILES=$(git diff --name-only --diff-filter=A HEAD)
+          fi
         fi
 
         RTM_FILES=$(echo "$CHANGED_FILES" | grep -E '^rtm/.*\.(yaml|yml|json)$' || true)
