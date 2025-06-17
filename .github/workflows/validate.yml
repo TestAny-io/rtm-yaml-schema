@@ -23,12 +23,12 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
-        npm install -g ajv-cli ajv-formats
+        npm install -g ajv-cli ajv-formats js-yaml
         
     - name: Validate schema itself
       run: |
         echo "Validating RTM schema against JSON Schema meta-schema..."
-        ajv compile -s schema/rtm-schema.json
+        node validate-schema.js compile schema/rtm-schema.json
         
     - name: Validate all example files
       run: |
@@ -36,7 +36,7 @@ jobs:
         if ls examples/*.yaml 1> /dev/null 2>&1; then
           find examples -name "*.yaml" -o -name "*.yml" | while read file; do
             echo "Validating $file"
-            ajv validate -s schema/rtm-schema.json -d "$file"
+            node validate-schema.js validate schema/rtm-schema.json "$file"
           done
         else
           echo "No example files found, skipping validation"
@@ -48,7 +48,7 @@ jobs:
         if [ -d "tests/valid" ]; then
           find tests/valid -name "*.yaml" -o -name "*.yml" | while read file; do
             echo "Validating $file (should pass)"
-            if ! ajv validate -s schema/rtm-schema.json -d "$file"; then
+            if ! node validate-schema.js validate schema/rtm-schema.json "$file"; then
               echo "❌ FAILED: $file should be valid but validation failed"
               exit 1
             else
@@ -65,7 +65,7 @@ jobs:
         if [ -d "tests/invalid" ]; then
           find tests/invalid -name "*.yaml" -o -name "*.yml" | while read file; do
             echo "Validating $file (should fail)"
-            if ajv validate -s schema/rtm-schema.json -d "$file" 2>/dev/null; then
+            if ! node validate-schema.js validate schema/rtm-schema.json "$file"; then
               echo "❌ FAILED: $file should be invalid but validation passed"
               exit 1
             else
@@ -217,7 +217,7 @@ jobs:
     - name: Install validators
       run: |
         if [ "${{ matrix.validator }}" = "ajv-cli" ]; then
-          npm install -g ajv-cli
+          npm install -g ajv-cli ajv-formats js-yaml
         elif [ "${{ matrix.validator }}" = "jsonschema" ]; then
           pip install jsonschema pyyaml
         fi
@@ -227,8 +227,8 @@ jobs:
         if [ "${{ matrix.validator }}" = "ajv-cli" ]; then
           if ls examples/*.yaml 1> /dev/null 2>&1; then # Check if any yaml files exist
             find examples -name "*.yaml" -o -name "*.yml" | while read file; do # Also find .yml
-              echo "Validating $file with ajv-cli"
-              ajv validate -s schema/rtm-schema.json -d "$file"
+              echo "Validating $file with Node.js ajv-cli"
+              node validate-schema.js validate schema/rtm-schema.json "$file"
             done
           else
             echo "No example files found for ajv-cli validation"
