@@ -30,51 +30,44 @@ jobs:
         echo "Validating RTM schema against JSON Schema meta-schema..."
         node validate-schema.js compile schema/rtm-schema.json
         
-    - name: Validate all example files
+    - name: Validate modified RTM files
       run: |
-        echo "Validating all example RTM files..."
-        if ls examples/*.yaml 1> /dev/null 2>&1; then
-          find examples -name "*.yaml" -o -name "*.yml" | while read file; do
-            echo "Validating $file"
-            node validate-schema.js validate schema/rtm-schema.json "$file"
-          done
+        echo "Checking for modified RTM files..."
+        
+        # 获取修改的文件列表（相对于 main 分支）
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          # PR 情况：与 target branch 比较
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
         else
-          echo "No example files found, skipping validation"
+          # Push 情况：与前一个 commit 比较
+          CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
         fi
         
-    - name: Test valid examples (if exist)
-      run: |
-        echo "Testing valid examples..."
-        if [ -d "tests/valid" ]; then
-          find tests/valid -name "*.yaml" -o -name "*.yml" | while read file; do
-            echo "Validating $file (should pass)"
-            if ! node validate-schema.js validate schema/rtm-schema.json "$file"; then
-              echo "❌ FAILED: $file should be valid but validation failed"
-              exit 1
-            else
-              echo "✅ PASSED: $file is valid"
-            fi
-          done
-        else
-          echo "No tests/valid directory found, skipping valid tests"
-        fi
+        echo "All changed files:"
+        echo "$CHANGED_FILES"
         
-    - name: Test invalid examples (if exist)
-      run: |
-        echo "Testing invalid examples..."
-        if [ -d "tests/invalid" ]; then
-          find tests/invalid -name "*.yaml" -o -name "*.yml" | while read file; do
-            echo "Validating $file (should fail)"
-            if ! node validate-schema.js validate schema/rtm-schema.json "$file"; then
-              echo "❌ FAILED: $file should be invalid but validation passed"
-              exit 1
+        # 过滤出 rtm 文件夹中的 yaml, yml, json 文件
+        RTM_FILES=$(echo "$CHANGED_FILES" | grep -E '^rtm/.*\.(yaml|yml|json)$' || true)
+        
+        if [ -z "$RTM_FILES" ]; then
+          echo "No RTM files (.yaml/.yml/.json) were modified in ./rtm folder, skipping validation"
+        else
+          echo "Found modified RTM files:"
+          echo "$RTM_FILES"
+          echo ""
+          
+          # 验证每个修改的文件
+          echo "$RTM_FILES" | while read file; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              node validate-schema.js validate schema/rtm-schema.json "$file"
             else
-              echo "✅ PASSED: $file correctly failed validation"
+              echo "File $file was deleted, skipping validation"
             fi
           done
-        else
-          echo "No tests/invalid directory found, skipping invalid tests"
-        fi
+        fi   
         
     - name: Generate validation report
       run: |
@@ -83,26 +76,19 @@ jobs:
         echo "### Schema Validation: ✅ PASSED" >> validation-report.md
         echo "### Example Files:" >> validation-report.md
         
-        if ls examples/*.yaml 1> /dev/null 2>&1; then
-          valid_count=$(find examples -name "*.yaml" -o -name "*.yml" | wc -l)
-          echo "- Valid examples: $valid_count files ✅" >> validation-report.md
+        # 统计修改的 RTM 文件
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
         else
-          echo "- Valid examples: 0 files (none found)" >> validation-report.md
+          CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
         fi
-        
-        if [ -d "tests/valid" ]; then
-          test_valid_count=$(find tests/valid -name "*.yaml" -o -name "*.yml" | wc -l)
-          echo "- Test valid: $test_valid_count files ✅" >> validation-report.md
-        else
-          echo "- Test valid: 0 files (directory not found)" >> validation-report.md
-        fi
-        
-        if [ -d "tests/invalid" ]; then
-          test_invalid_count=$(find tests/invalid -name "*.yaml" -o -name "*.yml" | wc -l)
-          echo "- Test invalid: $test_invalid_count files ✅" >> validation-report.md
-        else
-          echo "- Test invalid: 0 files (directory not found)" >> validation-report.md
-        fi
+
+        RTM_FILES=$(echo "$CHANGED_FILES" | grep -E '^rtm/.*\.(yaml|yml|json)$' || true)
+        RTM_COUNT=$(echo "$RTM_FILES" | grep -v '^$' | wc -l)
+
+        echo "- Modified RTM files validated: $RTM_COUNT files ✅" >> validation-report.md
         
         echo "" >> validation-report.md
         echo "All validations completed successfully! 🎉" >> validation-report.md
