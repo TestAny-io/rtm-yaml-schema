@@ -78,16 +78,16 @@
         "properties": {
           "version": {
             "type": "string",
-            "description": "Version number, must follow semver specification, first two digits should always match SRS version number, version number should not be lower than SRS version number in Published state",
+            "description": "版本号，需符合semver规范，前两位应始终与SRS的版本号一致，Published状态下版本号不应低于SRS的版本号",
             "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
           },
           "title": {
             "type": "string",
-            "description": "Title, required"
+            "description": "标题，必填"
           },
           "description": {
             "type": "string",
-            "description": "Description, optional"
+            "description": "描述，选填"
           },
           "contact": {
             "type": "object",
@@ -102,17 +102,17 @@
           "created": {
             "type": "string",
             "format": "date",
-            "description": "Created time, required"
+            "description": "创建时间，必填"
           },
           "updated": {
             "type": "string",
             "format": "date",
-            "description": "Updated time, required"
+            "description": "更新时间，必填"
           },
           "status": {
             "type": "string",
             "enum": ["Draft", "Published", "Deprecated", "Archived"],
-            "description": "Status, required"
+            "description": "状态，必填"
           }
         },
         "required": [
@@ -129,33 +129,50 @@
         "type": "object",
         "description": "A single requirement (functional or non-functional).",
         "properties": {
+          "module": {
+            "type": "string", 
+            "description": "功能模块标识，选填"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "技术依赖列表，选填"
+          },
+          "notes": {
+            "type": "string",
+            "description": "备注信息，选填"
+          },
+          "category": {
+            "type": "string", 
+            "description": "需求分类（主要用于NFR），选填"
+          },
           "id": {
             "type": "string",
-            "description": "Requirement ID, required (e.g., FR-XXX-001, NFR-XXX-001)",
+            "description": "需求ID，必填 (e.g., FR-XXX-001, NFR-XXX-001)",
             "pattern": "^(FR|NFR)-[A-Z0-9_]+-\\d+$"
           },
           "summary": {
             "type": "string",
-            "description": "Requirement name/summary, required"
+            "description": "需求名称/摘要，必填"
           },
           "description": {
             "type": ["string", "array"],
             "items": {"type": "string"},
-            "description": "Requirement description, string or array, required"
+            "description": "需求描述，string或array, 必填"
           },
           "type": {
             "type": "string",
             "enum": ["Functional", "Non-Functional"],
-            "description": "Requirement type, required"
+            "description": "需求类型，必填"
           },
           "priority": {
             "type": "string",
             "enum": ["Critical", "High", "Medium", "Low"],
-            "description": "Priority, required"
+            "description": "优先级，必填"
           },
           "srs_info": {
             "type": "object",
-            "description": "Requirement related SRS information, optional",
+            "description": "需求关联的SRS信息，选填",
             "properties": {
               "business_objectives": {"type": ["string", "array"], "items": {"type": "string"}},
               "business_rules": {"type": ["string", "array"], "items": {"type": "string"}},
@@ -174,6 +191,15 @@
                 "type": "array",
                 "items": {"type": "string"},
                 "minItems": 1
+              },
+              "technical_dependencies": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "技术依赖列表，选填"
+              },
+              "design_notes": {
+                "type": "string",
+                "description": "设计说明，选填"
               }
             },
             "required": ["category_and_complexity", "acceptance_criteria"],
@@ -181,7 +207,7 @@
           },
           "hld_info": {
             "type": "object",
-            "description": "Requirement related HLD information, optional",
+            "description": "需求关联的HLD信息，选填",
             "properties": {
               "adr_ids": {"type": "array", "items": {"type": "string", "pattern": "^ADR-[A-Z0-9_]+-\\d+$"}},
               "assumption_ids": {"type": "array", "items": {"type": "string", "pattern": "^ASSUMPTION-[A-Z0-9_]+-\\d+$"}},
@@ -191,7 +217,7 @@
           },
           "component_info": {
             "type": "object",
-            "description": "Requirement related Component information, optional",
+            "description": "需求关联的Component信息，选填",
             "properties": {
               "component_ids": {"type": "array", "items": {"type": "string", "pattern": "^COMP-[A-Z0-9_]+-\\d+$"}}
             },
@@ -199,7 +225,7 @@
           },
           "test_info": {
             "type": "object",
-            "description": "Requirement related test information, optional",
+            "description": "需求关联的测试信息，选填",
             "properties": {
               "testcase_ids": {"type": "array", "items": {"type": "string", "pattern": "^TC-[A-Z0-9_]+-\\d+$"}}
             },
@@ -207,7 +233,7 @@
           },
           "risk_info": {
             "type": "object",
-            "description": "Requirement related risk information, optional",
+            "description": "需求关联的风险信息，选填",
             "properties": {
               "linked_risk_ids": {"type": "array", "items": {"type": "string", "pattern": "^RISK-[A-Z0-9_]+-\\d+$"}}
             },
@@ -215,7 +241,7 @@
           },
           "change_request_info": {
             "type": "object",
-            "description": "Requirement related change request information, optional",
+            "description": "需求关联的变更请求信息，选填",
             "properties": {
               "linked_change_request_ids": {"type": "array", "items": {"type": "string", "pattern": "^CR-[A-Z0-9_]+-\\d+$"}}
             },
